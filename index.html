@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riberadle - Adivina personas de la Ribera del Órbigo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Urbanist:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-card: #141B3D;
+            --accent-primary: #FF6B35;
+            --accent-secondary: #F7931E;
+            --text-light: #E8F1F2;
+            --text-dim: #94A3B8;
+            --success: #4ADE80;
+            --partial: #FB923C;
+            --wrong: #EF4444;
+        }
+
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(247, 147, 30, 0.08) 0%, transparent 50%);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            font-weight: 400;
+            letter-spacing: 2px;
+            animation: fadeIn 1s ease-out 0.3s both;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 40px;
+            animation: slideUp 0.8s ease-out 0.5s both;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+        }
+
+        #personInput {
+            width: 100%;
+            padding: 18px 20px;
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-family: 'Urbanist', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        #personInput:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.3);
+        }
+
+        #personInput::placeholder {
+            color: var(--text-dim);
+        }
+
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-radius: 16px;
+            margin-top: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        .suggestions.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 107, 53, 0.1);
+            padding-left: 25px;
+        }
+
+        .stats-inline {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 14px 22px;
+            border-radius: 16px;
+            white-space: nowrap;
+        }
+
+        .stats-inline .stat-label {
+            color: var(--text-dim);
+            font-size: 1rem;
+        }
+
+        .stats-inline .stat-value {
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 1.2rem;
+        }
+
+
+        .attempts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .attempts-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .reset-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Urbanist', sans-serif;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+        }
+
+        .attempt {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .attempt-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .attempt-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes revealCategory {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .category-box {
+            animation: revealCategory 0.4s ease-out backwards;
+        }
+
+        .category-box:nth-child(1) { animation-delay: 0s; }
+        .category-box:nth-child(2) { animation-delay: 0.4s; }
+        .category-box:nth-child(3) { animation-delay: 0.8s; }
+        .category-box:nth-child(4) { animation-delay: 1.2s; }
+        .category-box:nth-child(5) { animation-delay: 1.6s; }
+        .category-box:nth-child(6) { animation-delay: 2.0s; }
+
+        .category-box {
+            padding: 15px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+            flex: 1 1 120px;
+        }
+
+        .category-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+        }
+
+        .category-box:hover::before {
+            opacity: 0.2;
+        }
+
+        .category-box.correct {
+            background: var(--success);
+            color: white;
+        }
+
+        .category-box.partial {
+            background: var(--partial);
+            color: white;
+        }
+
+        .category-box.wrong {
+            background: var(--wrong);
+            color: white;
+        }
+
+        .category-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .category-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .win-message, .lose-message {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.2));
+            border: 2px solid var(--success);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        .lose-message {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+            border-color: var(--wrong);
+        }
+
+        .win-message h2, .lose-message h2 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        .win-message p, .lose-message p {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+        }
+
+        .countdown {
+            margin-top: 15px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .countdown-label {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            margin-top: 5px;
+        }
+
+        #personInput:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 968px) {
+            .search-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-inline {
+                justify-content: center;
+            }
+
+            .attempt {
+                overflow-x: hidden;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RIBERADLE</h1>
+            <p class="subtitle">ADIVINA PERSONAS DE LA RIBERA DEL ÓRBIGO</p>
+        </header>
+
+        <div class="game-container">
+            <div class="search-row">
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="personInput"
+                        placeholder="Escribe un nombre..."
+                        autocomplete="off"
+                    >
+                    <div class="suggestions" id="suggestions"></div>
+                </div>
+                <div class="stats-inline">
+                    <span class="stat-label">Intentos:</span>
+                    <span class="stat-value" id="attemptCount">0</span>
+                </div>
+            </div>
+
+            <div class="attempts-header">
+                <h2>Tus intentos</h2>
+            </div>
+            <div id="attemptsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const people = [
+    {"nombre":"Valentín","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"César","pueblo":["Llamas de la Ribera","Carrizo de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Sergio","pueblo":["Llamas de la Ribera","Armellada"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Jon","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Aitor","pueblo":["Llamas de la Ribera","San Roman de los Caballeros"],"mayor2005":"Si","profesion":["Gasolinera"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Dani","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante Youtuber"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Hugo","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Madrid"],"hijos":"No"},
+    {"nombre":"Fozeras 'Adrián'","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Valladolid"],"hijos":"No"},
+    {"nombre":"Iván","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Nico","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Marcos","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Jaime","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Adriel","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["Barcelona"],"hijos":"No"},
+    {"nombre":"Lidia","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["Madrid"],"hijos":"No"},
+    {"nombre":"Leire","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Claudia","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante Camarera"],"genero":"Mujer","provincia":["Valladolid"],"hijos":"No"},
+    {"nombre":"Aitana","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Mabel","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Daniela 'Morrocamión'","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Johanna","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Alemania"],"hijos":"No"},
+    {"nombre":"Dani Autista","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Antonio","pueblo":["Villaviciosa de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Campelín","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Ekaitz","pueblo":["San Román de los Caballeros"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Miguel","pueblo":["Villaviciosa de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Valladolid"],"hijos":"No"},
+    {"nombre":"Adrián 'Dorito'","pueblo":["Villaviciosa de la Ribera"],"mayor2005":"No","profesion":["Repartidor"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Reguera","pueblo":["Villaviciosa de la Ribera"],"mayor2005":"No","profesion":["Jardinero Lupulero"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Rubén 'El vasco'","pueblo":["Santiago del Molinillo"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Angel 'Angeloso'","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Ganadero"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Joseba","pueblo":["Llamas de la Ribera","Carrizo de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Sendoa","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Turienzo","pueblo":["Mataluenga"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Javier Marqués","pueblo":["Carrizo de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Lucho","pueblo":["Carrizo de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Lolo Llamas","pueblo":["Carrizo de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Iker Keta","pueblo":["Carrizo de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Marquitos","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Ixai","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Pablo","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Rubén Palomo","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Samuel Cimanes","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Juanan","pueblo":["Cimanes del Tejar"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Palas","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Claudia Arias","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Valladolid"],"hijos":"No"},
+    {"nombre":"Inés Franco","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Deiene","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":[],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Ines","pueblo":["Cimanes del Tejar"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Sergio 'Amador' 'Porki'","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Manel","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Barcelona"],"hijos":"No"},
+    {"nombre":"Pablo 'Tato'","pueblo":["Llamas de la Ribera","Carrizo de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Eneas","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Madrid"],"hijos":"No"},
+    {"nombre":"Oliver","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Madrid"],"hijos":"No"},
+    {"nombre":"Sergio Vigo","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["Vigo"],"hijos":"No"},
+    {"nombre":"Andrés","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Alejandro 'Lapa'","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Estudiante Profesor de Minecraft Youtuber"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Víctor 'El de Nati'","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Militar Camarero"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Javi","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Rubén 'Vife'","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Eider","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["Madrid"],"hijos":"No"},
+    {"nombre":"Irene","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Alejandra","pueblo":["Llamas de la Ribera","Armellada"],"mayor2005":"Si","profesion":["Enfermera"],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Estela","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Eder","pueblo":["Quintanilla de Sollamas"],"mayor2005":"Si","profesion":["Estudiante"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"VictorGomx","pueblo":["Quintanilla de Sollamas"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Delri","pueblo":["Quintanilla de Sollamas"],"mayor2005":"No","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Paula","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Estudiante"],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Carmen","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Estudiante"],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Oihane","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["Bilbao"],"hijos":"No"},
+    {"nombre":"Claudia (Tolín)","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":[],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Diplo","pueblo":["Azadón","Carrizo"],"mayor2005":"Sí","profesion":["Banquero Asesino en serie"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Elsa","pueblo":["Llamas de la Ribera","Carrizo de la Ribera"],"mayor2005":"No","profesion":["Estudiante"],"genero":"Mujer","provincia":["León"],"hijos":"No"},
+    {"nombre":"Mingueza","pueblo":["Cimanes del Tejar"],"mayor2005":"Si","profesion":[],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Dudi","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Ganadero Alcoholico"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Xisco","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Marinero Filosofo Drogadicto"],"genero":"Hombre","provincia":["Asturias","León"],"hijos":"No"},
+    {"nombre":"Milagritos","pueblo":["Fuera"],"mayor2005":"Si","profesion":["Puesto de comida en ferias"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Valentín (padre)","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Empresario"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Alberto 'Jarero'","pueblo":["Carrizo de la Ribera"],"mayor2005":"Sí","profesion":["Masajista / Exfutbolista"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Sara","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Alcaldesa Enfermera"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Majo","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Jubilado"],"genero":"Hombre","provincia":["León"],"hijos":""},
+    {"nombre":"Silvia (Jarero)","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Administrativa clinica de masajes"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Silvia (Pepe)","pueblo":["Llamas de la Ribera"],"mayor2005":"No","profesion":["Veterinaria"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"María Jesús","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Estanquero"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"César (estanquero)","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Estanquero"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Marian","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Enfermera"],"genero":"Mujer","provincia":["Bilbao"],"hijos":"Si"},
+    {"nombre":"Oscar","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":[],"genero":"Hombre","provincia":["Bilbao"],"hijos":"Si"},
+    {"nombre":"Nadia","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Presidenta asociación cultural"],"genero":"Mujer","provincia":["León"],"hijos":""},
+    {"nombre":"Glori","pueblo":["Llamas de la Ribera"],"mayor2005":"Sí","profesion":["Jubilada"],"genero":"Mujer","provincia":["León"],"hijos":""},
+    {"nombre":"Rosa Mari","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Auxiliar administrativa"],"genero":"Mujer","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Buchaca","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Bar Jubilado"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Tato","pueblo":["Llamas de la Ribera","Carrizo de la Ribera"],"mayor2005":"Si","profesion":["Bar"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Nacho (Buchaca)","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Quesero"],"genero":"Hombre","provincia":["León"],"hijos":"No"},
+    {"nombre":"Luisito","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Informatico"],"genero":"Hombre","provincia":["León"],"hijos":"Si"},
+    {"nombre":"Don Ángel","pueblo":["Llamas de la Ribera"],"mayor2005":"Si","profesion":["Monaguillo Jubilado"],"genero":"Hombre","provincia":["León"],"hijos":"Si"}
+];
+
+        let targetPerson = null;
+        let attempts = [];
+        let usedPeople = new Set();
+        let gameWon = false;
+        let countdownInterval = null;
+
+        function getTodayKey() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function getDailyPersonIndex(dateKey) {
+            let hash = 0;
+            for (let i = 0; i < dateKey.length; i++) {
+                hash = ((hash << 5) - hash) + dateKey.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash) % people.length;
+        }
+
+        function saveGameState() {
+            const state = {
+                date: getTodayKey(),
+                attempts: attempts.map(a => a.nombre),
+                won: gameWon
+            };
+            localStorage.setItem('riberadle_state', JSON.stringify(state));
+        }
+
+        function loadGameState() {
+            try {
+                const raw = localStorage.getItem('riberadle_state');
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function getMillisUntilMidnight() {
+            const now = new Date();
+            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            return tomorrow - now;
+        }
+
+        function formatCountdown(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function disableInput() {
+            const input = document.getElementById('personInput');
+            input.disabled = true;
+            input.placeholder = 'Vuelve mañana para un nuevo reto';
+            document.getElementById('suggestions').classList.remove('active');
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                const ms = getMillisUntilMidnight();
+                const el = document.getElementById('countdown');
+                if (el) {
+                    el.textContent = formatCountdown(ms);
+                }
+                if (ms <= 1000) {
+                    clearInterval(countdownInterval);
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        function initGame() {
+            const todayKey = getTodayKey();
+            const index = getDailyPersonIndex(todayKey);
+            targetPerson = people[index];
+            attempts = [];
+            usedPeople = new Set();
+            gameWon = false;
+            document.getElementById('attemptsContainer').innerHTML = '';
+
+            const saved = loadGameState();
+            if (saved && saved.date === todayKey) {
+                saved.attempts.forEach(name => {
+                    const person = people.find(p => p.nombre === name);
+                    if (person) {
+                        usedPeople.add(name);
+                        attempts.push(person);
+                        const comparison = comparePerson(person, targetPerson);
+                        displayAttempt(person, comparison);
+                    }
+                });
+
+                if (saved.won) {
+                    gameWon = true;
+                    showWinMessage();
+                    disableInput();
+                    startCountdown();
+                }
+            }
+
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('attemptCount').textContent = attempts.length;
+        }
+
+        function filterSuggestions(input) {
+            if (gameWon) return [];
+            const searchTerm = input.toLowerCase();
+            return people
+                .filter(p => !usedPeople.has(p.nombre))
+                .filter(p => p.nombre.toLowerCase().includes(searchTerm))
+                .slice(0, 8);
+        }
+
+        function showSuggestions(suggestions) {
+            const suggestionsDiv = document.getElementById('suggestions');
+
+            if (suggestions.length === 0) {
+                suggestionsDiv.classList.remove('active');
+                return;
+            }
+
+            suggestionsDiv.innerHTML = suggestions
+                .map(p => `<div class="suggestion-item" onclick="selectPerson('${p.nombre.replace(/'/g, "\\'")}')">${p.nombre}</div>`)
+                .join('');
+            suggestionsDiv.classList.add('active');
+        }
+
+        function selectPerson(name) {
+            if (gameWon) return;
+            const person = people.find(p => p.nombre === name);
+            if (!person || usedPeople.has(name)) return;
+
+            usedPeople.add(name);
+            attempts.push(person);
+
+            const comparison = comparePerson(person, targetPerson);
+            displayAttempt(person, comparison);
+
+            document.getElementById('personInput').value = '';
+            document.getElementById('suggestions').classList.remove('active');
+            updateStats();
+
+            if (person.nombre === targetPerson.nombre) {
+                gameWon = true;
+                showWinMessage();
+                disableInput();
+                startCountdown();
+            }
+
+            saveGameState();
+        }
+
+        function comparePerson(guess, target) {
+            const result = {};
+
+            // Función auxiliar para comparar arrays
+            function compareArrays(guessArr, targetArr) {
+                if (guessArr.length === 0 && targetArr.length === 0) return 'correct';
+                if (guessArr.length === 0 || targetArr.length === 0) return 'wrong';
+                
+                const matches = guessArr.filter(item => targetArr.includes(item));
+                
+                if (matches.length === guessArr.length && matches.length === targetArr.length) {
+                    return 'correct';
+                } else if (matches.length > 0) {
+                    return 'partial';
+                } else {
+                    return 'wrong';
+                }
+            }
+
+            // Pueblo - puede tener coincidencia parcial
+            result.pueblo = compareArrays(guess.pueblo, target.pueblo);
+
+            // Profesión - puede tener coincidencia parcial
+            result.profesion = compareArrays(guess.profesion, target.profesion);
+
+            // Provincia - puede tener coincidencia parcial
+            result.provincia = compareArrays(guess.provincia, target.provincia);
+
+            // Resto de categorías - exactas
+            result.mayor2005 = guess.mayor2005 === target.mayor2005 ? 'correct' : 'wrong';
+            result.genero = guess.genero === target.genero ? 'correct' : 'wrong';
+            result.hijos = guess.hijos === target.hijos ? 'correct' : 'wrong';
+
+            return result;
+        }
+
+        function displayAttempt(person, comparison) {
+            const container = document.getElementById('attemptsContainer');
+            const attemptDiv = document.createElement('div');
+            attemptDiv.className = 'attempt';
+
+            const profesionText = person.profesion.length > 0 ? person.profesion.join(' ') : '-';
+            const provinciaText = person.provincia.length > 0 ? person.provincia.join(' / ') : '-';
+
+            attemptDiv.innerHTML = `
+                <div class="attempt-name">${person.nombre}</div>
+                <div class="attempt-categories">
+                    <div class="category-box ${comparison.pueblo}">
+                        <div class="category-label">Pueblo</div>
+                        <div class="category-value">${person.pueblo.join(' / ')}</div>
+                    </div>
+                    <div class="category-box ${comparison.mayor2005}">
+                        <div class="category-label">Mayor 2005 (2004, 2003...)</div>
+                        <div class="category-value">${person.mayor2005}</div>
+                    </div>
+                    <div class="category-box ${comparison.profesion}">
+                        <div class="category-label">Profesión</div>
+                        <div class="category-value">${profesionText}</div>
+                    </div>
+                    <div class="category-box ${comparison.genero}">
+                        <div class="category-label">Género</div>
+                        <div class="category-value">${person.genero}</div>
+                    </div>
+                    <div class="category-box ${comparison.provincia}">
+                        <div class="category-label">Provincia/Ciudad</div>
+                        <div class="category-value">${provinciaText}</div>
+                    </div>
+                    <div class="category-box ${comparison.hijos}">
+                        <div class="category-label">Hijos</div>
+                        <div class="category-value">${person.hijos}</div>
+                    </div>
+                </div>
+            `;
+
+            container.insertBefore(attemptDiv, container.firstChild);
+        }
+
+        function showWinMessage() {
+            const container = document.getElementById('attemptsContainer');
+            const winDiv = document.createElement('div');
+            winDiv.className = 'win-message';
+            winDiv.innerHTML = `
+                <h2>🎉 ¡GANASTE! 🎉</h2>
+                <p>¡Has adivinado a <strong>${targetPerson.nombre}</strong> en ${attempts.length} ${attempts.length === 1 ? 'intento' : 'intentos'}!</p>
+                <div class="countdown" id="countdown">${formatCountdown(getMillisUntilMidnight())}</div>
+                <div class="countdown-label">Próximo reto en</div>
+            `;
+            container.insertBefore(winDiv, container.firstChild);
+        }
+
+        // Event listeners
+        document.getElementById('personInput').addEventListener('input', (e) => {
+            const suggestions = filterSuggestions(e.target.value);
+            showSuggestions(suggestions);
+        });
+
+        document.getElementById('personInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const suggestions = filterSuggestions(e.target.value);
+                if (suggestions.length > 0) {
+                    selectPerson(suggestions[0].nombre);
+                }
+            }
+        });
+
+        // Click outside to close suggestions
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-box')) {
+                document.getElementById('suggestions').classList.remove('active');
+            }
+        });
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+</html>
