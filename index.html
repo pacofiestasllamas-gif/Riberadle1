@@ -422,6 +422,124 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent-secondary);
         }
+
+        /* Modal de estadísticas */
+        .stats-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 39, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .stats-modal-overlay.hidden {
+            display: none;
+        }
+
+        .stats-modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            animation: bounceIn 0.5s ease;
+        }
+
+        .stats-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .stats-modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 5px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stats-modal-close:hover {
+            color: var(--accent-primary);
+            transform: rotate(90deg);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 107, 53, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label-modal {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(255, 107, 53, 0.4);
+            transition: all 0.3s ease;
+            z-index: 999;
+            display: none;
+        }
+
+        .stats-button.visible {
+            display: block;
+        }
+
+        .stats-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -454,6 +572,37 @@
             <div id="attemptsContainer"></div>
         </div>
     </div>
+
+    <!-- Modal de estadísticas -->
+    <div id="statsModal" class="stats-modal-overlay hidden">
+        <div class="stats-modal">
+            <div class="stats-modal-header">
+                <h3 class="stats-modal-title">📊 Estadísticas</h3>
+                <button class="stats-modal-close" onclick="closeStatsModal()">×</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="statDaysPlayed">0</div>
+                    <div class="stat-label-modal">Días jugados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statWins">0</div>
+                    <div class="stat-label-modal">Victorias</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statTotalAttempts">0</div>
+                    <div class="stat-label-modal">Intentos totales</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="statAvgAttempts">0</div>
+                    <div class="stat-label-modal">Promedio intentos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón flotante para abrir estadísticas -->
+    <button id="statsButton" class="stats-button" onclick="openStatsModal()">📊</button>
 
     <script>
         const people = [
@@ -591,6 +740,62 @@
             }
         }
 
+        // Funciones para estadísticas globales
+        function loadGlobalStats() {
+            const saved = localStorage.getItem('riberadleStats');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                daysPlayed: 0,
+                wins: 0,
+                totalAttempts: 0,
+                playedDates: []
+            };
+        }
+
+        function saveGlobalStats(stats) {
+            localStorage.setItem('riberadleStats', JSON.stringify(stats));
+        }
+
+        function updateGlobalStats(won, attemptCount) {
+            const stats = loadGlobalStats();
+            const todayKey = getTodayKey();
+            
+            // Solo contar este día si no lo hemos contado antes
+            if (!stats.playedDates.includes(todayKey)) {
+                stats.daysPlayed++;
+                stats.playedDates.push(todayKey);
+            }
+            
+            if (won) {
+                stats.wins++;
+                stats.totalAttempts += attemptCount;
+            }
+            
+            saveGlobalStats(stats);
+            updateStatsDisplay();
+        }
+
+        function updateStatsDisplay() {
+            const stats = loadGlobalStats();
+            document.getElementById('statDaysPlayed').textContent = stats.daysPlayed;
+            document.getElementById('statWins').textContent = stats.wins;
+            document.getElementById('statTotalAttempts').textContent = stats.totalAttempts;
+            
+            const avgAttempts = stats.wins > 0 ? (stats.totalAttempts / stats.wins).toFixed(1) : 0;
+            document.getElementById('statAvgAttempts').textContent = avgAttempts;
+        }
+
+        function openStatsModal() {
+            updateStatsDisplay();
+            document.getElementById('statsModal').classList.remove('hidden');
+        }
+
+        function closeStatsModal() {
+            document.getElementById('statsModal').classList.add('hidden');
+        }
+
         function getMillisUntilMidnight() {
             const now = new Date();
             const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -650,13 +855,16 @@
 
                 if (saved.won) {
                     gameWon = true;
-                    showWinMessage();
+                    showWinMessageNoModal(); // Mostrar mensaje sin abrir modal
                     disableInput();
                     startCountdown();
+                    // Mostrar botón flotante para poder ver estadísticas
+                    document.getElementById('statsButton').classList.add('visible');
                 }
             }
 
             updateStats();
+            updateStatsDisplay();
         }
 
         function updateStats() {
@@ -804,6 +1012,30 @@
                 <div class="countdown-label">Próximo reto en</div>
             `;
             container.insertBefore(winDiv, container.firstChild);
+            
+            // Actualizar estadísticas globales
+            updateGlobalStats(true, attempts.length);
+            
+            // Mostrar modal de estadísticas después de 2 segundos
+            setTimeout(() => {
+                openStatsModal();
+            }, 2000);
+            
+            // Mostrar botón flotante para poder reabrir el modal
+            document.getElementById('statsButton').classList.add('visible');
+        }
+
+        function showWinMessageNoModal() {
+            const container = document.getElementById('attemptsContainer');
+            const winDiv = document.createElement('div');
+            winDiv.className = 'win-message';
+            winDiv.innerHTML = `
+                <h2>🎉 ¡GANASTE! 🎉</h2>
+                <p>¡Has adivinado a <strong>${targetPerson.nombre}</strong> en ${attempts.length} ${attempts.length === 1 ? 'intento' : 'intentos'}!</p>
+                <div class="countdown" id="countdown">${formatCountdown(getMillisUntilMidnight())}</div>
+                <div class="countdown-label">Próximo reto en</div>
+            `;
+            container.insertBefore(winDiv, container.firstChild);
         }
 
         // Event listeners
@@ -825,6 +1057,11 @@
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.search-box')) {
                 document.getElementById('suggestions').classList.remove('active');
+            }
+            
+            // Cerrar modal de estadísticas al hacer clic fuera
+            if (e.target.id === 'statsModal') {
+                closeStatsModal();
             }
         });
 
